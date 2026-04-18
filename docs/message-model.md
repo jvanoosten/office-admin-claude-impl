@@ -7,44 +7,49 @@ See `component-contracts.md` for the callback interface specification.
 
 ## Work Item Shapes
 
-Work items are plain Python dicts enqueued in each component's `asyncio.Queue`.
+Work items are `TypedDict` instances enqueued in each component's `asyncio.Queue`.
+TypedDict provides the same plain-dict runtime representation but enables static type checking (mypy) across all worker components.
 A `None` sentinel value is used to signal worker loop shutdown.
 
 ### OfficeAdmin work item
 ```python
-{
-    "request_id": str,           # UUID4
-    "task_type": str,            # e.g. "PRINT_CALENDAR_EVENTS"
-    "selected_date": str,        # ISO 8601 date string
-}
+class OfficeAdminWorkItem(TypedDict):
+    request_id: str           # UUID4
+    task_type: str            # e.g. "PRINT_CALENDAR_EVENTS"
+    selected_date: str        # ISO 8601 date string
 ```
 
 ### CalendarWorker work item
 ```python
-{
-    "office_admin_ref": OfficeAdmin,
-    "request_id": str,
-    "selected_date": str,
-}
+class CalendarWorkItem(TypedDict):
+    office_admin_ref: Any     # OfficeAdmin reference for callbacks
+    request_id: str
+    selected_date: str
 ```
 
 ### DocumentWorker work item
 ```python
-{
-    "office_admin_ref": OfficeAdmin,
-    "request_id": str,
-    "event": dict,               # normalized CalendarEvent
-}
+class DocumentWorkItem(TypedDict):
+    office_admin_ref: Any
+    request_id: str
+    event: CalendarEvent      # normalized event TypedDict
 ```
 
 ### PrinterWorker work item
 ```python
-{
-    "office_admin_ref": OfficeAdmin,
-    "request_id": str,
-    "event_id": str,
-    "document_path": str,        # absolute path to PDF
-}
+class PrinterWorkItem(TypedDict):
+    office_admin_ref: Any
+    request_id: str
+    event_id: str
+    document_path: str        # absolute path to PDF
+```
+
+### MailWorker work item
+```python
+class MailWorkItem(TypedDict):
+    office_admin_ref: Any
+    request_id: str
+    event: CalendarEvent      # normalized event TypedDict
 ```
 
 ---
@@ -52,16 +57,17 @@ A `None` sentinel value is used to signal worker loop shutdown.
 ## Normalized Calendar Event Shape
 
 ```python
-{
-    "id": str,                   # Google Calendar event ID; required
-    "summary": str,              # Event title; default "" if absent
-    "start": str,                # ISO 8601 dateTime or date
-    "end": str,                  # ISO 8601 dateTime or date
-    "location": str | None,
-    "description": str | None,
-    "html_link": str | None,
-    "status": str | None,        # "confirmed", "tentative", "cancelled"
-}
+class CalendarEvent(TypedDict, total=False):
+    id: str                  # Google Calendar event ID; required
+    summary: str             # Event title; default "" if absent
+    start: str               # ISO 8601 dateTime or date
+    end: str                 # ISO 8601 dateTime or date
+    timezone: str | None     # IANA timezone from start.timeZone (e.g. "America/Chicago")
+    location: str | None
+    description: str | None
+    html_link: str | None
+    status: str | None       # "confirmed", "tentative", "cancelled"
+    colorId: str | None      # Google Calendar color ID (e.g. "7"); used by DocumentWorker for header color
 ```
 
 ---
@@ -70,11 +76,13 @@ A `None` sentinel value is used to signal worker loop shutdown.
 
 The task status payload is the dict stored in OfficeAdmin's task store and returned by `get_status`.
 
+All task types share these base fields:
+
 ```python
 {
     # Identity
     "request_id": str,            # UUID4
-    "task_type": str,             # "PRINT_CALENDAR_EVENTS"
+    "task_type": str,             # "PRINT_CALENDAR_EVENTS" | "SEND_EMAIL_NOTIFICATIONS"
 
     # Lifecycle
     "status": str,                # PENDING | RUNNING | COMPLETED | CANCEL_REQUESTED | CANCELLED | ERROR
@@ -84,20 +92,9 @@ The task status payload is the dict stored in OfficeAdmin's task store and retur
     # Input
     "selected_date": str,         # ISO 8601 date string
 
-    # Calendar progress
+    # Calendar progress (shared by both task types)
     "calendar_event_count": int,  # total events found; 0 until retrieved
     "events_retrieved": bool,
-
-    # Document progress
-    "documents_expected": int,    # 0 until calendar complete
-    "documents_completed": int,
-    "documents_failed": int,
-    "document_paths": list[str],  # paths of completed PDFs
-
-    # Print progress
-    "prints_expected": int,       # 0 until all documents complete
-    "prints_completed": int,
-    "prints_failed": int,
 
     # Error tracking
     "errors": list[str],          # error messages from failed callbacks
@@ -105,6 +102,37 @@ The task status payload is the dict stored in OfficeAdmin's task store and retur
     # Timestamps (ISO 8601 datetime strings)
     "created_at": str,
     "updated_at": str,
+}
+```
+
+Additional fields for `PRINT_CALENDAR_EVENTS` tasks:
+
+```python
+{
+    # Document progress
+    "documents_expected": int,    # 0 until calendar complete
+    "documents_completed": int,
+    "documents_failed": int,
+    "document_paths": list[str],  # absolute paths of completed PDFs
+
+    # Print progress
+    "prints_expected": int,       # 0 until all documents complete
+    "prints_completed": int,
+    "prints_failed": int,
+}
+```
+
+Additional fields for `SEND_EMAIL_NOTIFICATIONS` tasks:
+
+```python
+{
+    # Email draft progress
+    "emails_expected": int,       # 0 until calendar complete
+    "emails_completed": int,
+    "emails_skipped": int,        # events with no mailto: recipients (normal outcome)
+    "emails_failed": int,
+    "draft_ids": list[str],       # Gmail API draft IDs of created drafts
+    "skipped_event_ids": list[str],  # event IDs of skipped events
 }
 ```
 

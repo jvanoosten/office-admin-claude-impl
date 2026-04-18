@@ -17,6 +17,8 @@
 - `selected_date` represents a full calendar day without timezone qualification
 - CalendarWorker queries Google Calendar using the **local system timezone**, not UTC: `timeMin` is local midnight on the selected date; `timeMax` is local midnight on the following date
 - only timed events (having `start.dateTime`) that start at or after 08:00 local and end at or before 18:00 local are included; all-day events are excluded
+- v1 targets **desktop-only deployment** (macOS/Windows); the local system timezone is the user's own timezone, which is correct for this use case
+- containerized or server deployments would need an explicit `TZ` environment variable; this is out of scope for v1
 - per-user timezone support is out of scope for v1
 
 ### Message-Based Processing
@@ -215,6 +217,8 @@ For `SEND_EMAIL_NOTIFICATIONS` requests, also include:
 - the task store is in-memory only in v1
 - all task state is lost on server restart
 - this is documented behavior
+- tasks are removed from the in-memory store 30 minutes after reaching a terminal state (COMPLETED, CANCELLED, ERROR); polling after that window returns UNKNOWN
+- worker `cancelled` flags are removed 60 minutes after `cancel_request` is called to bound memory growth
 
 ---
 

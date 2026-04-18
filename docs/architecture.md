@@ -39,6 +39,7 @@ All components run within a single asyncio event loop, shared with the FastAPI a
 - each component runs a background `asyncio.Task` as its worker loop
 - incoming public methods enqueue work items and return immediately
 - results are reported by direct async callback calls within the same event loop
+- work items are `TypedDict` instances (same runtime representation as plain dicts; enables mypy type checking across all workers)
 
 Because asyncio is cooperative and single-threaded, state mutations that do not span an `await` boundary are safe without explicit locking. All compound check-then-act operations (e.g., incrementing a counter and conditionally dispatching downstream work) must complete before any `await`.
 
@@ -385,6 +386,8 @@ New worker components must:
 - in-memory only in v1
 - all task state is lost on server restart
 - this is documented behavior; clients should not rely on task history persisting across restarts
+- tasks are automatically removed from the store **30 minutes** after reaching a terminal state (COMPLETED, CANCELLED, ERROR) using an asyncio cleanup task scheduled at transition time
+- worker `cancelled` flags are removed **60 minutes** after `cancel_request` is called, to bound memory growth in long-running sessions
 
 ---
 

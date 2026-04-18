@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Office Admin</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Office Admin</h1>
+  </header>
+
+  <main>
+    <section id="controls">
+      <div class="control-card" id="ctrl-print">
+        <h2>Print Calendar Events</h2>
+        <p>Print PDFs for all timed events on the selected date.</p>
+        <button id="btn-print" class="primary-btn">Print Calendar Events</button>
+        <div id="form-print" class="date-form hidden">
+          <label for="date-print">Select date:</label>
+          <input type="date" id="date-print" />
+          <button id="submit-print">Submit</button>
+          <span id="error-print" class="error-msg hidden"></span>
+        </div>
+      </div>
+
+      <div class="control-card" id="ctrl-email">
+        <h2>Send Email Notifications</h2>
+        <p>Create Gmail draft notifications for events on the selected date.</p>
+        <button id="btn-email" class="primary-btn">Send Email Notifications</button>
+        <div id="form-email" class="date-form hidden">
+          <label for="date-email">Select date:</label>
+          <input type="date" id="date-email" />
+          <button id="submit-email">Submit</button>
+          <span id="error-email" class="error-msg hidden"></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="tasks-section">
+      <h2>Tasks</h2>
+      <div id="task-list">
+        <p id="no-tasks">No tasks yet.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,11 +1,7 @@
 #!/bin/bash
 
-# Initialize conda properly
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate office-admin-app-env
-
-cd ~/Documents/office-admin-1.1.0
+cd ~/Documents/git/office-admin-claude-impl
 
 (sleep 2 && open http://127.0.0.1:8000) &
 
-python -m uvicorn src.api:app
+uv run python main.py

@@ -72,7 +72,7 @@ Request body:
 
 Validation:
 - `selected_date` must be a valid ISO 8601 date string (`YYYY-MM-DD`)
-- invalid format → HTTP 400
+- invalid format → HTTP 422 (Pydantic validation error)
 
 Behavior:
 1. validate `selected_date`
@@ -100,7 +100,7 @@ Request body:
 
 Validation:
 - `selected_date` must be a valid ISO 8601 date string (`YYYY-MM-DD`)
-- invalid format → HTTP 400
+- invalid format → HTTP 422 (Pydantic validation error)
 
 Behavior:
 1. validate `selected_date`
@@ -197,7 +197,7 @@ Using Pydantic's `date` type for `selected_date` in the request model automatica
 
 | Condition | HTTP Status | Body |
 |---|---|---|
-| Invalid date format | 400 | `{"detail": "Invalid date format. Expected YYYY-MM-DD."}` |
+| Invalid date format | 422 | Pydantic `ValidationError` response (FastAPI default) |
 | Queue full | 429 | `{"detail": "Server is busy. Try again shortly."}` |
 | Unknown request ID | 404 | `{"status": "UNKNOWN", "request_id": "..."}` |
 | Internal error | 500 | `{"detail": "Internal server error."}` |
@@ -211,7 +211,7 @@ Using Pydantic's `date` type for `selected_date` in the request model automatica
 4. `POST /api/office/send-email-notifications` returns request ID and 202
 5. `GET /api/office/status/{id}` returns the current status payload
 6. `POST /api/office/cancel/{id}` returns the updated status
-7. invalid date returns 400
+7. invalid date returns 422 (Pydantic validation; no custom exception handler needed)
 8. queue full returns 429
 9. unknown request ID returns 404
 10. all status responses include enough detail for UI rendering

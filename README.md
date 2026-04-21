@@ -1,5 +1,7 @@
 # office-admin-claude-impl
-Office automation sample using the administrator framework, code generated using Claude Code
+Office automation sample using the administrator framework implemented using Anthropic's Claude Code.
+
+![Office Admin App](./static/Office_Admin_claude.jpg)
 
 ## Environment setup
 
@@ -9,13 +11,4 @@ This project uses uv.
 uv sync
 
 ### Run the app
-uv run uvicorn src.api:app --reload
-
-### Run tests
-uv run pytest
-
-### Add dependencies
-uv add <package>
-
-### Add dev dependencies
-uv add --dev <package>
+uv run main.py

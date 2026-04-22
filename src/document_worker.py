@@ -170,7 +170,7 @@ def _generate_pdf(event: dict, output_path: str) -> None:
         c.setFillColorRGB(*LABEL_COLOR)
         cur_y -= ITEM_GAP
         c.drawString(LEFT_MARGIN, cur_y, label)
-        return cur_y - LABEL_FONT_SIZE - 2
+        return cur_y - VALUE_FONT_SIZE - 2
 
     def draw_value_bold(text: str, cur_y: float) -> float:
         c.setFont("Helvetica-Bold", VALUE_FONT_SIZE)
